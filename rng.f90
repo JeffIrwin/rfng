@@ -126,16 +126,16 @@ end function int32_mt19937
 
 function uint32_mt19937(rng) result(num)
 
-	class(rng_t) :: rng
-
 	! Extract an unsigned 32 bit int but return a signed 64 bit int because
 	! that's all that Fortran has :(
+
+	class(rng_t) :: rng
 
 	int64_t :: num
 
 	num = iand( &
 		int(rng%int32(), int64), &
-		int(z"ffffffff",              int64))
+		int(z"ffffffff", int64))
 
 end function uint32_mt19937
 
@@ -144,6 +144,8 @@ end function uint32_mt19937
 subroutine twist_mt19937(rng)
 
 	type(rng_t) :: rng
+
+	!********
 
 	int32_t, parameter :: &
 		a = int(z"9908b0df", int32), &
@@ -163,11 +165,11 @@ subroutine twist_mt19937(rng)
 	!! caller is calling int32() within a print statement)
 	!write(error_unit,*) "twist_mt19937()"
 
-	! Fortran `mod()` is consistent with the C `%` operator, and I assume this
-	! is what MT should use.  Fortran `modulo()` works differently for negative
-	! args
+	! Fortran `mod()` is consistent with the C `%` operator. Fortran `modulo()`
+	! works differently for negative args
 	do i = 0, n32 - 1
-		x = ior(iand(rng%mt(i), upper_mask), iand(rng%mt(mod(i+1, n32)), lower_mask))
+		x = ior(iand(rng%mt(i)            , upper_mask), &
+		        iand(rng%mt(mod(i+1, n32)), lower_mask))
 		xa = shiftr(x, 1)
 		if (mod(x, 2) /= 0) xa = ieor(xa, a)
 		rng%mt(i) = ieor(rng%mt(mod(i + m, n32)), xa)
@@ -182,19 +184,60 @@ end module rng_m
 
 !===============================================================================
 
-program main
+module rng_test_m
 
 	use rng_m
 	implicit none
 
+	integer :: nfail_glbl = 0, npass_glbl = 0
+
+contains
+
+!********
+
+function to_str(i) result(str_)
+
+	integer, intent(in) :: i
+	character(len = :), allocatable :: str_
+
+	character :: buffer*16
+
+	write(buffer, "(i0)") i
+	str_ = trim(buffer)
+
+end function to_str
+
+!********
+
+subroutine assert_(test, file_, line)
+
+	logical, intent(in) :: test
+
+	character(len = *), intent(in) :: file_
+	!character(len = *), intent(in) :: msg
+
+	integer, intent(in) :: line
+
+	if (test) then
+		npass_glbl = npass_glbl + 1
+	else
+		nfail_glbl = nfail_glbl + 1
+		write(*,*) "Error: assertion failed in """//file_ &
+			//""" at line "//to_str(line)
+	end if
+
+end subroutine assert_
+
+!********
+
+subroutine rng_test()
+
 	integer :: i, hist_min, hist_max, mod_, rand_
+	integer(kind = 8) :: dummy
 	!integer :: fid
 	integer, allocatable :: hist(:)
 
 	type(rng_t) :: rng
-
-	write(*,*) "starting rng main"
-	write(*,*)
 
 	! To compare results with reference C implementation, call init_genrand(0)
 	! instead of init_by_array() as in the original.  The reference C
@@ -202,15 +245,45 @@ program main
 	!
 	!     http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/CODES/mt19937ar.c
 	!
-	! It's also easier to print hex values instead of decimal-formatted ints
+	! It can be easier to print hex values instead of decimal-formatted ints
 	! because of signed vs unsigned differences with Fortran
 
-	call rng%seed(0)
-	!call rng%seed(5489)
+	! TODO: remove this first seed and test without explicitly seeding, using
+	! this as the fallback default
+	call rng%seed(5489)
 
-	! TODO: add some unit tests.  Get first (u)int32 and compare with expected
-	! value from ref implementation, try a couple seeds, and also try generating
-	! ~1000 so that twist_mt19937() get called more than once
+	! Test default seed
+	call assert_(rng%uint32() == 3499211612, __FILE__, __LINE__)
+
+	! Test explicit seed
+	call rng%seed(0)
+	call assert_(rng%uint32() == 2357136044, __FILE__, __LINE__)
+	call assert_(rng%uint32() == 2546248239, __FILE__, __LINE__)
+
+	! Test re-seeding.  Should get same number as before
+	call rng%seed(0)
+	call assert_(rng%uint32() == 2357136044, __FILE__, __LINE__)
+
+	! Test > 624 calls.  This will trigger another twist_mt19937() call
+	call rng%seed(0)
+	do i = 1, 997
+		dummy = rng%uint32()
+	end do
+	call assert_(rng%uint32() == 3814118674, __FILE__, __LINE__)
+	call assert_(rng%uint32() == 2172679577, __FILE__, __LINE__)
+	call assert_(rng%uint32() == 3043451800, __FILE__, __LINE__)
+
+	write(*,*) to_str(npass_glbl)//" / "//to_str(npass_glbl + nfail_glbl) &
+		//" tests passed"
+	write(*,*) to_str(nfail_glbl)//" tests failed"
+	write(*,*)
+
+	! TODO
+	return
+
+	! TODO: add some more unit tests.  Get first (u)int32 and compare with
+	! expected value from ref implementation, try a couple seeds, and also try
+	! generating ~1000 so that twist_mt19937() get called more than once
 	!
 	! #ifdef some macros so that we can conditionally compile a unit test
 	! program, or just compile a lib from the module alone
@@ -248,10 +321,28 @@ program main
 	!end do
 	!close(fid)
 
-	!********
+end subroutine rng_test
+
+end module rng_test_m
+
+!===============================================================================
+
+program main
+
+	use rng_m
+	use rng_test_m
+
+	implicit none
+
+	write(*,*) "starting rng main"
+	write(*,*)
+
+	call rng_test()
 
 	write(*,*) "ending rng main"
 	write(*,*)
+
+	call exit(nfail_glbl)
 
 end program main
 
