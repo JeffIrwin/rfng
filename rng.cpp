@@ -53,14 +53,10 @@ class mt19937
             state = seed_array_fort(&seeds[0], seeds.size());
         }
 
-        //mt19937(std::random_device::result_type r)
-        mt19937(std::random_device& r)
+        mt19937(std::random_device::result_type r)
         {
-            //std::uniform_int_distribution<int32_t> dist(0, 2000000000);
-            //int32_t seed = dist(r);
-            int32_t seed = r();
+            int32_t seed = r;
             //std::cout << "random_device seed = " << seed << std::endl;
-
             state = seed_fort(seed);
         }
 
@@ -72,6 +68,7 @@ class mt19937
     private:
         rng_state_t state;
 };
+// TODO: add dist class for consistency with std?  I'm so tired of oop
 }
 
 void Rng::seed(int32_t const& seed_)
@@ -97,24 +94,14 @@ int32_t remainder(int32_t i, int32_t n)
 
 unsigned int randomChar(int k = 255) {
     std::random_device rd;
-
-    //RNG::mt19937 gen(rd());
-    RNG::mt19937 gen(rd); // note `rd` and not `rd()`. TODO?
-
-    //std::uniform_int_distribution<> dis(0, k);
-    //return dis(gen);
-    return remainder(gen.int32(), k);
+    RNG::mt19937 gen(rd());
+    return remainder(gen.int32(), k + 1);
 }
 
 unsigned int srandom_char(RNG::mt19937 &gen, int k = 255) {
     //std::uniform_int_distribution<> dis(0, k);
     //return dis(gen);
-
-    //return gen.int32() % k;
-    //return abs(gen.int32()) % k;
-    return remainder(gen.int32(), k);
-
-    //return 7;
+    return remainder(gen.int32(), k + 1);
 }
 
 std::string generateCode(const unsigned int len, std::string seed) {
@@ -126,54 +113,7 @@ std::string generateCode(const unsigned int len, std::string seed) {
     std::stringstream ss;
     for (uint i = 0; i < len; i++) {
         ss << chars[seed == "" ? randomChar(l) : srandom_char(gen, l)];
-        //ss << chars[srandom_char(gen, l)];
     }
-    return ss.str();
-}
-
-std::string generateCodeProto(const unsigned int len, std::string seed) {
-
-    // TODO: remove
-
-    std::seed_seq s(seed.begin(), seed.end());
-
-    std::cout << "s = \n";
-    //std::seed_seq seq{1, 2, 3, 4, 5};
-    //std::vector<std::uint32_t> seeds(10);
-    std::vector<std::uint32_t> seeds(s.size());
-    s.generate(seeds.begin(), seeds.end());
-    for (std::uint32_t n : seeds)
-        std::cout << n << '\n';
-    
-    //std::cout << "s = " << string(s) << std::endl;
-
-    int32_t s_ = 0;
-    if (seed == "")
-    {
-        // TODO
-    }
-    else
-    {
-        // TODO: only 32 bits of entropy.  Add array seed option to lib
-        for (uint i = 0; i < seed.length(); i++)
-            s_ += seed[i];
-    }
-
-    //int32_t s_ = int(seed.substr(0, 1)) - 'a';
-    //std::cout << "s_ = " << s_ << std::endl;
-
-    Rng gen;
-    gen.seed(s_);
-
-    const std::string chars =
-        "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUV23456789";
-    const unsigned int l = chars.length() - 1;
-    std::stringstream ss;
-
-    for (uint i = 0; i < len; i++) {
-        ss << chars[gen.int32() % l];
-    }
-
     return ss.str();
 }
 
