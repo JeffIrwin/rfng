@@ -364,3 +364,54 @@ end program main
 
 #endif
 
+subroutine rng_fort_hello() bind(c)
+
+	! TODO: remove.  For testing only
+
+	use rng_m
+	implicit none
+
+	type(rng_t) :: rng
+
+	print "(a)", "hello from rng fortran"
+
+	call rng%seed(0)
+	print *, rng%uint32()
+	print *, rng%uint32()
+	print *, rng%uint32()
+
+end subroutine rng_fort_hello
+
+!********
+
+function get_rng_fort(seed) bind(c) result(num)
+
+	! TODO: remove.  For testing only
+	!
+	! One-off seed and generate.  We need a way to return the whole rng_t struct
+	! to be owned by C(++) so the state can persist without being re-seeded for
+	! multiple number generations from C(++)
+
+	use iso_c_binding
+	use rng_m
+	implicit none
+
+	integer(kind = c_int32_t), intent(in) :: seed
+	integer(kind = c_int32_t) :: num
+
+	!********
+
+	type(rng_t) :: rng
+
+	print *, "seed = ", seed
+	num = 0
+	!return
+
+	call  rng%seed(seed)
+	num = rng%int32()
+	print "(a,i0)", "num     = ", num
+
+end function get_rng_fort
+
+!===============================================================================
+

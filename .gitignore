@@ -1,6 +1,7 @@
 
 # Compiler output
 /rng
+/rngxx
 /*.mod
 /rng.o
 /librng.a
