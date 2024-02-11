@@ -1,6 +1,8 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <random>
+#include <sstream>
 
 //********
 
@@ -32,7 +34,6 @@ class Rng
         rng_state_t state;
 };
 
-#include <random>
 namespace RNG
 {
 // TODO: rename RNG namespace and/or Rng class? They can't clash.  Or just get
@@ -197,14 +198,6 @@ int main()
         std::endl;
 
     //********
-
-    std::cout << "gen codes std  = "  << "\n" <<
-        generateCodeStd(10, "ahhhhh") << "\n" <<
-        generateCodeStd(10, "ahhhhh") << "\n" <<
-        generateCodeStd(10, "abcdef") << "\n" <<
-        generateCodeStd(10, "")       << "\n" <<
-        generateCodeStd(10, "")       << "\n" <<
-        std::endl;
 
     std::cout << "gen codes fort = " << "\n" <<
         generateCode(10, "ahhhhh") << "\n" <<
