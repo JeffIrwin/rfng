@@ -61,7 +61,40 @@ class mt19937
 
     private:
         rng_state_t state;
-// TODO: add dist class for consistency with std?  I'm so tired of oop
+};
+
+int32_t remainder(int32_t i, int32_t n)
+{
+    return (i % n + n) % n;
+}
+
+template <typename T = int32_t> class uniform_int_distribution
+{
+    public:
+        //template <typename T> T uniform_int_distribution(int32_t min_, int32_t max_)
+        //uniform_int_distribution(int32_t min_, int32_t max_)
+        uniform_int_distribution(T min_, T max_)
+        {
+            // Inclusive of both min and max
+            min = min_;
+            max = max_;
+        }
+
+        //int32_t uniform_int_distribution(mt19937& gen)
+        //{
+        //    return 0;
+        //}
+
+        //int operator()(int i) { return counter += i; }
+        T operator()(mt19937& gen)
+        {
+            //return 0;
+            //return gen.int32();
+            return min + remainder(gen.int32(), max - min + 1);
+        }
+
+    private:
+        T min, max;
 };
 
 }  // namespace rfng

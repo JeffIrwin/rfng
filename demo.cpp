@@ -18,15 +18,24 @@ int32_t remainder(int32_t i, int32_t n)
 //     https://github.com/cgsdev0/rollycubes/game/src/StringUtils.cpp
 
 unsigned int randomChar(int k = 255) {
+    //std::random_device rd;
+    //rfng::mt19937 gen(rd());
+    //return remainder(gen.int32(), k + 1);
     std::random_device rd;
     rfng::mt19937 gen(rd());
-    return remainder(gen.int32(), k + 1);
+    rfng::uniform_int_distribution<> dis(0, k);
+    return dis(gen);
 }
 
 unsigned int srandom_char(rfng::mt19937 &gen, int k = 255) {
+
     //std::uniform_int_distribution<> dis(0, k);
     //return dis(gen);
-    return remainder(gen.int32(), k + 1);
+
+    rfng::uniform_int_distribution<> dis(0, k);
+    return dis(gen);
+
+    //return remainder(gen.int32(), k + 1);
 }
 
 std::string generateCode(const unsigned int len, std::string seed) {
