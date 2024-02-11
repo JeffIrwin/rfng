@@ -2,6 +2,8 @@
 # Compiler output
 /rng
 /*.mod
+/rng.o
+/librng.a
 
 /scratch/
 

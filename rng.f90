@@ -182,6 +182,8 @@ end module rng_m
 
 !===============================================================================
 
+#ifdef RNG_FORT_TEST
+
 module rng_test_m
 
 	use rng_m
@@ -207,6 +209,11 @@ end function to_str
 
 !********
 
+! TODO: rename?  asserts typically crash immediately on failure.  Maybe more of
+! a "test"
+!
+! Also might be better if we take experted vs actual values as args, then we can
+! print them instead of just having a binary pass/fail
 #define ASSERT_(x) call assert_((x), __FILE__, __LINE__)
 subroutine assert_(test, file_, line)
 
@@ -236,7 +243,7 @@ subroutine rng_test()
 	!integer :: fid
 	integer, allocatable :: hist(:)
 
-	type(rng_t) :: rng
+	type(rng_t) :: rng, ra, rb
 
 	! To compare results with reference C implementation, call init_genrand(0)
 	! instead of init_by_array() as in the original.  The reference C
@@ -248,7 +255,6 @@ subroutine rng_test()
 	! because of signed vs unsigned differences with Fortran
 
 	! Test default (not explicitly seeded) seed
-	!call assert_(rng%uint32() == 3499211612, __FILE__, __LINE__)
 	ASSERT_(rng%uint32() == 3499211612)
 
 	! Test explicit seed
@@ -269,20 +275,32 @@ subroutine rng_test()
 	ASSERT_(rng%uint32() == 2172679577)
 	ASSERT_(rng%uint32() == 3043451800)
 
+	! Test multiple RNGs running concurrently
+	call ra%seed(0)
+	call rb%seed(0)
+	ASSERT_(ra%uint32() == 2357136044)
+	ASSERT_(rb%uint32() == 2357136044)
+	ASSERT_(ra%uint32() == 2546248239)
+	ASSERT_(rb%uint32() == 2546248239)
+	ASSERT_(ra%uint32() == 3071714933)
+	ASSERT_(rb%uint32() == 3071714933)
+
+	! Test (signed) int32 generation
+	call rng%seed(0)
+	!print *, rng%int32()
+	!print *, rng%int32()
+	ASSERT_(rng%int32() == -1937831252)
+	ASSERT_(rng%int32() == -1748719057)
+
+	!********
+
 	write(*,*) to_str(npass_glbl)//" / "//to_str(npass_glbl + nfail_glbl) &
 		//" tests passed"
 	write(*,*) to_str(nfail_glbl)//" tests failed"
 	write(*,*)
 
-	! TODO
+	! TODO: histogram test
 	return
-
-	! TODO: add some more unit tests.  Get first (u)int32 and compare with
-	! expected value from ref implementation, try a couple seeds, and also try
-	! generating ~1000 so that twist_mt19937() get called more than once
-	!
-	! #ifdef some macros so that we can conditionally compile a unit test
-	! program, or just compile a lib from the module alone
 
 	do i = 1, 1000
 		!print "(a,z0.8)", "rng = ", rng%int32()
@@ -343,4 +361,6 @@ program main
 end program main
 
 !===============================================================================
+
+#endif
 
