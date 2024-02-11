@@ -59,6 +59,45 @@ contains
 
 !===============================================================================
 
+function seed_array(seed_, len_) bind(c, name = "seed_array_fort") result(rng)
+
+	! This is not public but C++ dgaf
+
+	!integer(c_int32_t), intent(in) :: seed_
+	!integer(c_int32_t), intent(in) :: seed_(*)
+	integer(c_int32_t), intent(in) :: seed_(len_)
+	integer(c_int32_t), intent(in) :: len_
+
+	type(rng_state_t) :: rng
+
+	!********
+
+	int32_t, parameter :: &
+		w = 32, &
+		f = 1812433253
+
+	int32_t :: i
+
+	!print *, "len_ = ", len_
+	!print *, "seed_(1) = ", seed_(1)
+	!print *, "seed_ = ", seed_
+
+	rng%index_ = n32
+
+	!rng%mt(0) = seed_(1)
+	rng%mt(0: min(len_, n32) - 1) = seed_(1: min(len_, n32))
+
+	! Reference C implementation expands keys differently but YOLO
+	do i = min(len_, n32), n32 - 1
+		rng%mt(i)  = f * ieor(rng%mt(i-1), shiftr(rng%mt(i-1), w-2)) + i
+	end do
+	!print *, "rng%mt = ", rng%mt
+	!print *, "rng%mt = ", rng%mt(0: 10)
+
+end function seed_array
+
+!===============================================================================
+
 function seed(seed_) bind(c, name = "seed_fort") result(rng)
 
 	! This is not public but C++ dgaf
