@@ -99,13 +99,11 @@ function int32_mt19937(rng) result(num)
 	if (rng%index_ >= n32) then
 		if (rng%index_ > n32) then
 
-			!write(*,*) "Error: generator mt19937 was never seeded"
-			write(error_unit,*) "Error: generator mt19937 was never seeded"
-			call exit(-1)
+			call rng%seed(5489)
 
-			! TODO: alternatively, seed with constant value; 5489 is used in
-			! reference C code[54].  This is probably better than abrupt exit
-			! for a lib
+			!!write(*,*) "Error: generator mt19937 was never seeded"
+			!write(error_unit,*) "Error: generator mt19937 was never seeded"
+			!call exit(-1)
 
 		end if
 		call twist_mt19937(rng)
@@ -209,6 +207,7 @@ end function to_str
 
 !********
 
+#define ASSERT_(x) call assert_((x), __FILE__, __LINE__)
 subroutine assert_(test, file_, line)
 
 	logical, intent(in) :: test
@@ -248,30 +247,27 @@ subroutine rng_test()
 	! It can be easier to print hex values instead of decimal-formatted ints
 	! because of signed vs unsigned differences with Fortran
 
-	! TODO: remove this first seed and test without explicitly seeding, using
-	! this as the fallback default
-	call rng%seed(5489)
-
-	! Test default seed
-	call assert_(rng%uint32() == 3499211612, __FILE__, __LINE__)
+	! Test default (not explicitly seeded) seed
+	!call assert_(rng%uint32() == 3499211612, __FILE__, __LINE__)
+	ASSERT_(rng%uint32() == 3499211612)
 
 	! Test explicit seed
 	call rng%seed(0)
-	call assert_(rng%uint32() == 2357136044, __FILE__, __LINE__)
-	call assert_(rng%uint32() == 2546248239, __FILE__, __LINE__)
+	ASSERT_(rng%uint32() == 2357136044)
+	ASSERT_(rng%uint32() == 2546248239)
 
 	! Test re-seeding.  Should get same number as before
 	call rng%seed(0)
-	call assert_(rng%uint32() == 2357136044, __FILE__, __LINE__)
+	ASSERT_(rng%uint32() == 2357136044)
 
 	! Test > 624 calls.  This will trigger another twist_mt19937() call
 	call rng%seed(0)
 	do i = 1, 997
 		dummy = rng%uint32()
 	end do
-	call assert_(rng%uint32() == 3814118674, __FILE__, __LINE__)
-	call assert_(rng%uint32() == 2172679577, __FILE__, __LINE__)
-	call assert_(rng%uint32() == 3043451800, __FILE__, __LINE__)
+	ASSERT_(rng%uint32() == 3814118674)
+	ASSERT_(rng%uint32() == 2172679577)
+	ASSERT_(rng%uint32() == 3043451800)
 
 	write(*,*) to_str(npass_glbl)//" / "//to_str(npass_glbl + nfail_glbl) &
 		//" tests passed"
