@@ -19,11 +19,11 @@ int32_t remainder(int32_t i, int32_t n)
 
 unsigned int randomChar(int k = 255) {
     std::random_device rd;
-    RNG::mt19937 gen(rd());
+    rfng::mt19937 gen(rd());
     return remainder(gen.int32(), k + 1);
 }
 
-unsigned int srandom_char(RNG::mt19937 &gen, int k = 255) {
+unsigned int srandom_char(rfng::mt19937 &gen, int k = 255) {
     //std::uniform_int_distribution<> dis(0, k);
     //return dis(gen);
     return remainder(gen.int32(), k + 1);
@@ -31,7 +31,7 @@ unsigned int srandom_char(RNG::mt19937 &gen, int k = 255) {
 
 std::string generateCode(const unsigned int len, std::string seed) {
     std::seed_seq s(seed.begin(), seed.end());
-    RNG::mt19937 gen(s);
+    rfng::mt19937 gen(s);
     const std::string chars =
         "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUV23456789";
     const unsigned int l = chars.length() - 1;
@@ -50,10 +50,9 @@ int main()
 {
     std::cout << "hello c++ rng" << std::endl;
 
-    //RNG::Rng rng;
-    RNG::mt19937 rng(0);  // explicit seeding is optional
-    //RNG::mt19937 rng(5489);  // 5489 is the default if there's no explicit seed call
-    //RNG::mt19937 rng;  // default seed
+    rfng::mt19937 rng(0);  // explicit seeding is optional
+    //rfng::mt19937 rng(5489);  // 5489 is the default if there's no explicit seed call
+    //rfng::mt19937 rng;  // default seed
 
     std::cout << "rngs = " <<
         rng.int32() << " " <<
@@ -81,7 +80,7 @@ int main()
     const std::string GREEN = "\033[1;32m";
     const std::string RESET = "\033[0m";
 
-    RNG::mt19937 r(1);
+    rfng::mt19937 r(1);
     std::cout << "r = " <<
         r.int32() << " " <<
         r.int32() << " " <<

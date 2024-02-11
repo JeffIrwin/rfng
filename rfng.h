@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <random>
 
-namespace RNG
+namespace rfng
 {
 
 const int N32 = 624;
@@ -20,7 +20,6 @@ extern "C" rng_state_t seed_array_fort(const int32_t* seed_, const int32_t& len)
 extern "C" int32_t int32_fort(rng_state_t& r);
 // TODO: add uint32() which casts the fortran 64 bit result to an actual uint32
 
-// TODO: rename RNG namespace, class, source file, and/or repo?
 class mt19937
 {
     public:
@@ -65,5 +64,5 @@ class mt19937
 // TODO: add dist class for consistency with std?  I'm so tired of oop
 };
 
-}  // namespace RNG
+}  // namespace rfng
 
