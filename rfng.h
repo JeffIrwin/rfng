@@ -1,3 +1,5 @@
+#ifndef INCLUDE_RFNG_H
+#define INCLUDE_RFNG_H
 
 #include <iostream>
 #include <stdint.h>
@@ -58,11 +60,6 @@ class mt19937
         rng_state_t state;
 };
 
-int32_t remainder(int32_t i, int32_t n)
-{
-    return (i % n + n) % n;
-}
-
 template <typename T = int32_t> class uniform_int_distribution
 {
     public:
@@ -80,7 +77,13 @@ template <typename T = int32_t> class uniform_int_distribution
 
     private:
         T min, max;
+
+        T remainder(T i, T n)
+        {
+            return (i % n + n) % n;
+        }
+
 };
 
 }  // namespace rfng
-
+#endif
