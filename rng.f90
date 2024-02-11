@@ -24,6 +24,8 @@ module rng_m
 	public :: rng_t
 	private
 
+	! TODO: add 64-bit version.  From wikipedia it seems that the difference is
+	! just a few constants
 	int32_t, parameter :: n32 = 624
 
 	!********
@@ -102,7 +104,7 @@ end subroutine seed_mt19937
 
 !===============================================================================
 
-function get_int32(rng) bind(c) result(num)
+function get_int32(rng) bind(c, name = "int32") result(num)
 
 	type(rng_state_t)  :: rng
 	integer(c_int32_t) :: num
@@ -236,18 +238,14 @@ end function to_str
 
 !********
 
-! TODO: rename?  asserts typically crash immediately on failure.  Maybe more of
-! a "test"
-!
-! Also might be better if we take experted vs actual values as args, then we can
+! Might be better if we take expected vs actual values as args, then we can
 ! print them instead of just having a binary pass/fail
-#define ASSERT_(x) call assert_((x), __FILE__, __LINE__)
-subroutine assert_(test, file_, line)
+#define TEST_(x) call test_((x), __FILE__, __LINE__)
+subroutine test_(test, file_, line)
 
 	logical, intent(in) :: test
 
 	character(len = *), intent(in) :: file_
-	!character(len = *), intent(in) :: msg
 
 	integer, intent(in) :: line
 
@@ -259,7 +257,7 @@ subroutine assert_(test, file_, line)
 			//""" at line "//to_str(line)
 	end if
 
-end subroutine assert_
+end subroutine test_
 
 !********
 
@@ -284,43 +282,43 @@ subroutine rng_test()
 	!print *, rng%int32(), rng%int32(), rng%int32(), rng%int32(), rng%int32()
 
 	! Test default (not explicitly seeded) seed
-	ASSERT_(rng%uint32() == 3499211612)
+	TEST_(rng%uint32() == 3499211612)
 
 	! Test explicit seed
 	call rng%seed(0)
-	ASSERT_(rng%uint32() == 2357136044)
-	ASSERT_(rng%uint32() == 2546248239)
+	TEST_(rng%uint32() == 2357136044)
+	TEST_(rng%uint32() == 2546248239)
 
 	! Test re-seeding.  Should get same number as before
 	call rng%seed(0)
-	ASSERT_(rng%uint32() == 2357136044)
+	TEST_(rng%uint32() == 2357136044)
 
 	! Test > 624 calls.  This will trigger another twist_mt19937() call
 	call rng%seed(0)
 	do i = 1, 997
 		dummy = rng%uint32()
 	end do
-	ASSERT_(rng%uint32() == 3814118674)
-	ASSERT_(rng%uint32() == 2172679577)
-	ASSERT_(rng%uint32() == 3043451800)
+	TEST_(rng%uint32() == 3814118674)
+	TEST_(rng%uint32() == 2172679577)
+	TEST_(rng%uint32() == 3043451800)
 
 	! Test multiple RNGs running concurrently
 	call ra%seed(0)
 	call rb%seed(0)
-	ASSERT_(ra%uint32() == 2357136044)
-	ASSERT_(rb%uint32() == 2357136044)
-	ASSERT_(ra%uint32() == 2546248239)
-	ASSERT_(rb%uint32() == 2546248239)
-	ASSERT_(ra%uint32() == 3071714933)
-	ASSERT_(rb%uint32() == 3071714933)
+	TEST_(ra%uint32() == 2357136044)
+	TEST_(rb%uint32() == 2357136044)
+	TEST_(ra%uint32() == 2546248239)
+	TEST_(rb%uint32() == 2546248239)
+	TEST_(ra%uint32() == 3071714933)
+	TEST_(rb%uint32() == 3071714933)
 
 	! Test (signed) int32 generation
 	call rng%seed(0)
-	ASSERT_(rng%int32() == -1937831252)
-	ASSERT_(rng%int32() == -1748719057)
-	ASSERT_(rng%int32() == -1223252363)
-	ASSERT_(rng%int32() == -668873536)
-	ASSERT_(rng%int32() == -1706118333)
+	TEST_(rng%int32() == -1937831252)
+	TEST_(rng%int32() == -1748719057)
+	TEST_(rng%int32() == -1223252363)
+	TEST_(rng%int32() == -668873536)
+	TEST_(rng%int32() == -1706118333)
 
 	!********
 

@@ -20,9 +20,9 @@ extern "C" rng seed(int32_t const& seed_);
 // struct/class.  May need a separate struct which wraps `struct rng`, similar
 // to what is happenning on fortran side
 //
-// Also add get_uint32() which casts the fortran 64 bit result to an actual
+// Also add uint32() which casts the fortran 64 bit result to an actual
 // uint32
-extern "C" int32_t get_int32(rng& r);
+extern "C" int32_t int32(rng& r);
 
 //********
 
@@ -35,11 +35,11 @@ int main()
     //rng rng;  // default seed (5489)
 
     std::cout << "rngs = " <<
-        get_int32(rng) << " " <<
-        get_int32(rng) << " " <<
-        get_int32(rng) << " " <<
-        get_int32(rng) << " " <<
-        get_int32(rng) << " " <<
+        int32(rng) << " " <<
+        int32(rng) << " " <<
+        int32(rng) << " " <<
+        int32(rng) << " " <<
+        int32(rng) << " " <<
         std::endl;
 
     return 0;
