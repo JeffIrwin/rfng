@@ -38,12 +38,10 @@ module rng_m
 	!********
 
 	type :: rng_t
-		! Type with bound procedures cannot bind(c)
+		! Type with bound procedures cannot bind(c), so this type just wraps the
+		! C interface `rng_state_t` and adds convenience procedures for Fortran
 
 		type(rng_state_t) :: s
-
-		!int32_t :: mt(0: n32-1)  ! state vector
-		!int32_t :: index_ = n32 + 1
 
 		contains
 			procedure :: &
@@ -59,12 +57,12 @@ contains
 
 !===============================================================================
 
-subroutine seed(rng, seed_) bind(c)
+function seed(seed_) bind(c) result(rng)
 
 	! This is not public but C++ dgaf
 
-	type(rng_state_t) :: rng
 	integer(c_int32_t), intent(in) :: seed_
+	type(rng_state_t) :: rng
 
 	!********
 
@@ -85,9 +83,9 @@ subroutine seed(rng, seed_) bind(c)
 		rng%mt(i)  = f * ieor(rng%mt(i-1), shiftr(rng%mt(i-1), w-2)) + i
 	end do
 	!print *, "rng%mt = ", rng%mt
-	print *, "rng%mt = ", rng%mt(0: 4)
+	!print *, "rng%mt = ", rng%mt(0: 4)
 
-end subroutine seed
+end function seed
 
 !===============================================================================
 
@@ -98,7 +96,7 @@ subroutine seed_mt19937(rng, seed_)
 	class(rng_t) :: rng
 	int32_t, intent(in) :: seed_
 
-	call seed(rng%s, seed_)
+	rng%s = seed(seed_)
 
 end subroutine seed_mt19937
 
@@ -110,8 +108,6 @@ function get_int32(rng) bind(c) result(num)
 	integer(c_int32_t) :: num
 
 	!********
-
-	! TODO: dry
 
 	int32_t, parameter :: &
 		b = int(z"9d2c5680", int32), &
@@ -125,16 +121,7 @@ function get_int32(rng) bind(c) result(num)
 	int32_t :: y
 
 	if (rng%index_ >= n32) then
-		if (rng%index_ > n32) then
-
-			!call rng%seed(5489)
-			call seed(rng, 5489)
-
-			!!write(*,*) "Error: generator mt19937 was never seeded"
-			!write(error_unit,*) "Error: generator mt19937 was never seeded"
-			!call exit(-1)
-
-		end if
+		if (rng%index_ > n32) rng = seed(5489)
 		call twist_mt19937(rng)
 	end if
 
@@ -294,6 +281,8 @@ subroutine rng_test()
 	! It can be easier to print hex values instead of decimal-formatted ints
 	! because of signed vs unsigned differences with Fortran
 
+	!print *, rng%int32(), rng%int32(), rng%int32(), rng%int32(), rng%int32()
+
 	! Test default (not explicitly seeded) seed
 	ASSERT_(rng%uint32() == 3499211612)
 
@@ -402,63 +391,6 @@ program main
 end program main
 
 #endif
-
-!===============================================================================
-
-function get_rng_fort(seed) bind(c) result(num)
-
-	! TODO: remove.  For testing only
-	!
-	! One-off seed and generate.  We need a way to return the whole rng_t struct
-	! to be owned by C(++) so the state can persist without being re-seeded for
-	! multiple number generations from C(++)
-
-	use iso_c_binding
-	use rng_m
-	implicit none
-
-	integer(kind = c_int32_t), intent(in) :: seed
-	integer(kind = c_int32_t) :: num
-
-	!********
-
-	type(rng_t) :: rng
-
-	print *, "seed = ", seed
-	num = 0
-	!return
-
-	call  rng%seed(seed)
-	num = rng%int32()
-	print "(a,i0)", "num     = ", num
-
-end function get_rng_fort
-
-!===============================================================================
-
-function get_rng() bind(c) result(rng)
-
-	! TODO: remove.  For testing only
-
-	use iso_c_binding
-	use rng_m
-	implicit none
-
-	type(rng_state_t) :: rng
-
-	!********
-
-	print *, "starting get_rng()"
-
-	rng%index_ = 42
-	print "(a,i0)", "rng%index_    = ", rng%index_
-
-	rng%mt = 1337
-	rng%mt(1) = 69
-	rng%mt(3) = 420
-	print "(a,i6,i6,i6,i6,i6)", "rng%mt    = ", rng%mt(0:4)
-
-end function get_rng
 
 !===============================================================================
 

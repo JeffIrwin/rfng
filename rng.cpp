@@ -7,33 +7,32 @@
 // TODO: move to included header in a namespace
 
 const int N32 = 624;
-struct rng // TODO: rename uppercase Rng?  C++ is fine w/ lowercase unlike Fortran clash
+struct rng // TODO: rename uppercase Rng?  c++ is fine w/ lowercase unlike fortran clash
 {
     int32_t mt[N32];
-    int32_t index_ = N32 + 1;  // WET initialization with Fortran :(
+    int32_t index_ = N32 + 1;  // wet initialization with fortran :(
 };
 
-// TODO: can this be a fn that returns rng instead of subroutine w/ out-arg?
-extern "C" void seed(rng& r, int32_t const& seed_);
+//extern "C" void seed(rng& r, int32_t const& seed_);
+extern "C" rng seed(int32_t const& seed_);
 
+// TODO: add a proper oop c++ wrapper for this which is a member of a c++
+// struct/class.  May need a separate struct which wraps `struct rng`, similar
+// to what is happenning on fortran side
+//
+// Also add get_uint32() which casts the fortran 64 bit result to an actual
+// uint32
 extern "C" int32_t get_int32(rng& r);
 
 //********
 
 int main()
 {
-    std::cout << "hello C++ rng" << std::endl;
+    std::cout << "hello c++ rng" << std::endl;
 
-    rng rng;
-    std::cout << "rng.index_ = " << rng.index_ << std::endl;
-    seed(rng, 0);
-    std::cout << "rng.mt = " <<
-        rng.mt[0] << " " << 
-        rng.mt[1] << " " << 
-        rng.mt[2] << " " << 
-        rng.mt[3] << " " << 
-        rng.mt[4] << " " << 
-        std::endl;
+    auto rng = seed(0);  // explicit seeding is optional
+    //auto rng = seed(5489);  // explicit seeding is optional
+    //rng rng;  // default seed (5489)
 
     std::cout << "rngs = " <<
         get_int32(rng) << " " <<
