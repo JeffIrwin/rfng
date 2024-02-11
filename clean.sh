@@ -2,5 +2,5 @@
 
 set -xe
 
-rm *.o *.mod *.a rng rngxx
+rm *.o *.mod *.a rfng demo
 

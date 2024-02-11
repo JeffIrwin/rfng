@@ -4,7 +4,7 @@
 #include <random>
 #include <sstream>
 
-#include "rng.h"
+#include "rfng.h"
 
 int32_t remainder(int32_t i, int32_t n)
 {

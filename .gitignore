@@ -1,10 +1,10 @@
 
 # Compiler output
-/rng
-/rngxx
+/rfng
+/demo
 /*.mod
-/rng.o
-/librng.a
+/rfng.o
+/librfng.a
 
 /scratch/
 
