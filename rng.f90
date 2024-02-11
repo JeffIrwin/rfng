@@ -13,26 +13,46 @@
 
 !===============================================================================
 
+#define int32_t integer(kind = int32)
+#define int64_t integer(kind = int64)
+
 module rng_m
 
+	use iso_c_binding
 	use iso_fortran_env
 
 	implicit none
 
-	public :: rng_t
+	public :: rng_t, n32
 	private
-
-#define int32_t integer(kind = int32)
-#define int64_t integer(kind = int64)
 
 	int32_t, parameter :: n32 = 624
 
 	!********
 
-	type rng_t
+	public :: rng_state_t
+	type, bind(c) :: rng_state_t
+		! The C interface alias of this struct is just `rng`
+		integer(kind = c_int32_t) :: mt(0: n32-1)  ! state vector
+		integer(kind = c_int32_t) :: index_ = n32 + 1
+	end type rng_state_t
 
-		int32_t :: mt(0: n32-1)  ! state vector
-		int32_t :: index_ = n32 + 1
+	!! Dummy struct for C/Fortran interop testing
+	!!
+	!! TODO: remove.  Testing only
+	!public :: struct_t
+	!type, bind(c) :: struct_t
+	!	integer(kind = c_int32_t) :: mt(0: n32-1)  ! state vector
+	!	integer(kind = c_int32_t) :: index_ = n32 + 1
+	!end type struct_t
+
+	type :: rng_t
+		! Type with bound procedures cannot bind(c)
+
+		type(rng_state_t) :: s
+
+		!int32_t :: mt(0: n32-1)  ! state vector
+		!int32_t :: index_ = n32 + 1
 
 		contains
 			procedure :: &
@@ -50,6 +70,8 @@ contains
 
 subroutine seed_mt19937(rng, seed)
 
+	! TODO: DRY up and leverage the C interface `seed()` so that tests cover it
+
 	class(rng_t) :: rng
 	int32_t, intent(in) :: seed
 
@@ -63,15 +85,15 @@ subroutine seed_mt19937(rng, seed)
 
 	!print *, "seed = ", seed
 
-	rng%index_ = n32
-	rng%mt(0) = seed
+	rng%s%index_ = n32
+	rng%s%mt(0) = seed
 
 	! Honestly it's a lot easier and more compact to write bit-fiddling
 	! operations like this in C instead of Fortran
 	do i = 1, n32 - 1
-		rng%mt(i)  = f * ieor(rng%mt(i-1), shiftr(rng%mt(i-1), w-2)) + i
+		rng%s%mt(i)  = f * ieor(rng%s%mt(i-1), shiftr(rng%s%mt(i-1), w-2)) + i
 	end do
-	!print *, "rng%mt = ", rng%mt
+	!print *, "rng%s%mt = ", rng%s%mt
 
 end subroutine seed_mt19937
 
@@ -96,8 +118,8 @@ function int32_mt19937(rng) result(num)
 
 	int32_t :: y
 
-	if (rng%index_ >= n32) then
-		if (rng%index_ > n32) then
+	if (rng%s%index_ >= n32) then
+		if (rng%s%index_ > n32) then
 
 			call rng%seed(5489)
 
@@ -109,12 +131,12 @@ function int32_mt19937(rng) result(num)
 		call twist_mt19937(rng)
 	end if
 
-	y = rng%mt(rng%index_)
+	y = rng%s%mt(rng%s%index_)
 	y = ieor(y, iand(shiftr(y, u), d))
 	y = ieor(y, iand(shiftl(y, s), b))
 	y = ieor(y, iand(shiftl(y, t), c))
 	y = ieor(y, shiftr(y, l))
-	rng%index_ = rng%index_ + 1
+	rng%s%index_ = rng%s%index_ + 1
 
 	num = y
 
@@ -166,13 +188,13 @@ subroutine twist_mt19937(rng)
 	! Fortran `mod()` is consistent with the C `%` operator. Fortran `modulo()`
 	! works differently for negative args
 	do i = 0, n32 - 1
-		x = ior(iand(rng%mt(i)            , upper_mask), &
-		        iand(rng%mt(mod(i+1, n32)), lower_mask))
+		x = ior(iand(rng%s%mt(i)            , upper_mask), &
+		        iand(rng%s%mt(mod(i+1, n32)), lower_mask))
 		xa = shiftr(x, 1)
 		if (mod(x, 2) /= 0) xa = ieor(xa, a)
-		rng%mt(i) = ieor(rng%mt(mod(i + m, n32)), xa)
+		rng%s%mt(i) = ieor(rng%s%mt(mod(i + m, n32)), xa)
 	end do
-	rng%index_ = 0
+	rng%s%index_ = 0
 
 end subroutine twist_mt19937
 
@@ -360,29 +382,9 @@ program main
 
 end program main
 
-!===============================================================================
-
 #endif
 
-subroutine rng_fort_hello() bind(c)
-
-	! TODO: remove.  For testing only
-
-	use rng_m
-	implicit none
-
-	type(rng_t) :: rng
-
-	print "(a)", "hello from rng fortran"
-
-	call rng%seed(0)
-	print *, rng%uint32()
-	print *, rng%uint32()
-	print *, rng%uint32()
-
-end subroutine rng_fort_hello
-
-!********
+!===============================================================================
 
 function get_rng_fort(seed) bind(c) result(num)
 
@@ -412,6 +414,97 @@ function get_rng_fort(seed) bind(c) result(num)
 	print "(a,i0)", "num     = ", num
 
 end function get_rng_fort
+
+!===============================================================================
+
+!function get_struct_t() bind(c) result(struct)
+!
+!	! TODO: remove.  For testing only
+!	!
+!	! One-off seed and generate.  We need a way to return the whole rng_t struct
+!	! to be owned by C(++) so the state can persist without being re-seeded for
+!	! multiple number generations from C(++)
+!
+!	use iso_c_binding
+!	use rng_m
+!	implicit none
+!
+!	type(struct_t) :: struct
+!
+!	!********
+!
+!	print *, "starting get_struct_t()"
+!
+!	struct%index_ = 42
+!	print "(a,i0)", "struct%index_    = ", struct%index_
+!
+!	struct%mt = 1337
+!	struct%mt(1) = 69
+!	struct%mt(3) = 420
+!	print "(a,i6,i6,i6,i6,i6)", "struct%mt    = ", struct%mt(0:4)
+!
+!end function get_struct_t
+
+!===============================================================================
+
+function get_rng() bind(c) result(rng)
+
+	! TODO: remove.  For testing only
+
+	use iso_c_binding
+	use rng_m
+	implicit none
+
+	type(rng_state_t) :: rng
+
+	!********
+
+	print *, "starting get_rng()"
+
+	rng%index_ = 42
+	print "(a,i0)", "rng%index_    = ", rng%index_
+
+	rng%mt = 1337
+	rng%mt(1) = 69
+	rng%mt(3) = 420
+	print "(a,i6,i6,i6,i6,i6)", "rng%mt    = ", rng%mt(0:4)
+
+end function get_rng
+
+!===============================================================================
+
+subroutine seed(rng, seed_) bind(c)
+
+	! TODO: can this be moved into the module?
+	use iso_fortran_env
+	use rng_m
+	implicit none
+
+	type(rng_state_t) :: rng
+	int32_t, intent(in) :: seed_
+
+	!********
+
+	int32_t, parameter :: &
+		w = 32, &
+		f = 1812433253
+
+	int32_t :: i
+
+	!print *, "seed_ = ", seed_
+
+	rng%index_ = n32
+	rng%mt(0) = seed_
+
+	! Honestly it's a lot easier and more compact to write bit-fiddling
+	! operations like this in C instead of Fortran
+	do i = 1, n32 - 1
+		rng%mt(i)  = f * ieor(rng%mt(i-1), shiftr(rng%mt(i-1), w-2)) + i
+	end do
+	!print *, "rng%mt = ", rng%mt
+	print *, "rng%mt = ", rng%mt(0: 4)
+
+end subroutine seed
 
 !===============================================================================
 
