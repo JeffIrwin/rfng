@@ -35,17 +35,12 @@ class mt19937
 
             std::vector<std::int32_t> seeds(s.size());
             s.generate(seeds.begin(), seeds.end());
-            //std::cout << "C++ seeds = \n";
-            //for (std::int32_t n : seeds)
-            //    std::cout << n << '\n';
-            ////state = seed_array_fort(s, s.size());
             state = seed_array_fort(&seeds[0], seeds.size());
         }
 
         mt19937(std::random_device::result_type r)
         {
             int32_t seed = r;
-            //std::cout << "random_device seed = " << seed << std::endl;
             state = seed_fort(seed);
         }
 
@@ -71,8 +66,6 @@ int32_t remainder(int32_t i, int32_t n)
 template <typename T = int32_t> class uniform_int_distribution
 {
     public:
-        //template <typename T> T uniform_int_distribution(int32_t min_, int32_t max_)
-        //uniform_int_distribution(int32_t min_, int32_t max_)
         uniform_int_distribution(T min_, T max_)
         {
             // Inclusive of both min and max
@@ -80,16 +73,8 @@ template <typename T = int32_t> class uniform_int_distribution
             max = max_;
         }
 
-        //int32_t uniform_int_distribution(mt19937& gen)
-        //{
-        //    return 0;
-        //}
-
-        //int operator()(int i) { return counter += i; }
         T operator()(mt19937& gen)
         {
-            //return 0;
-            //return gen.int32();
             return min + remainder(gen.int32(), max - min + 1);
         }
 
