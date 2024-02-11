@@ -32,7 +32,7 @@ module rng_m
 
 	public :: rng_state_t
 	type, bind(c) :: rng_state_t
-		! The C interface alias of this struct is just `rng`
+		! C struct interface
 		integer(kind = c_int32_t) :: mt(0: n32-1)  ! state vector
 		integer(kind = c_int32_t) :: index_ = n32 + 1
 	end type rng_state_t
@@ -59,7 +59,7 @@ contains
 
 !===============================================================================
 
-function seed(seed_) bind(c) result(rng)
+function seed(seed_) bind(c, name = "seed_fort") result(rng)
 
 	! This is not public but C++ dgaf
 
@@ -104,7 +104,7 @@ end subroutine seed_mt19937
 
 !===============================================================================
 
-function get_int32(rng) bind(c, name = "int32") result(num)
+function get_int32(rng) bind(c, name = "int32_fort") result(num)
 
 	type(rng_state_t)  :: rng
 	integer(c_int32_t) :: num
