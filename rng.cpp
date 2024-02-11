@@ -50,9 +50,10 @@ int main()
 {
     std::cout << "hello c++ rng" << std::endl;
 
-    RNG::Rng rng;
-    rng.seed(0);  // explicit seeding is optional
-    //rng.seed(5489);  // 5489 is the default if there's no explicit seed call
+    //RNG::Rng rng;
+    RNG::mt19937 rng(0);  // explicit seeding is optional
+    //RNG::mt19937 rng(5489);  // 5489 is the default if there's no explicit seed call
+    //RNG::mt19937 rng;  // default seed
 
     std::cout << "rngs = " <<
         rng.int32() << " " <<
@@ -80,8 +81,7 @@ int main()
     const std::string GREEN = "\033[1;32m";
     const std::string RESET = "\033[0m";
 
-    RNG::Rng r;
-    r.seed(1);
+    RNG::mt19937 r(1);
     std::cout << "r = " <<
         r.int32() << " " <<
         r.int32() << " " <<
