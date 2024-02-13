@@ -82,6 +82,25 @@ int main()
         r.int32() << " " <<
         std::endl;
 
+    //std::mt19937 gen_std;
+    //gen_std.seed(0);
+    std::mt19937 gen_std(0);
+    std::cout << "std  = " << gen_std() << std::endl;
+    std::uniform_int_distribution<> dis_std(0, 255);
+    std::cout << "std  = " << dis_std(gen_std) << std::endl;
+
+    // The operator `()` of rfng::mt19937 is consistent with std's (and the
+    // reference C implementation), but rfng::uniform_int_distribution is not
+    // consistent with std.  I guess there's something more to it than just
+    // module and add?
+
+    //std::random_device rd;
+    //rfng::mt19937 gen_rfng(rd());
+    rfng::mt19937 gen_rfng(0);
+    std::cout << "rfng = " << gen_rfng() << std::endl;
+    rfng::uniform_int_distribution<> dis_rfng(0, 255);
+    std::cout << "rfng = " << dis_rfng(gen_rfng) << std::endl;
+
     r.seed(0);
     if (r.int32() == -1937831252)
         std::cout << GREEN + "test passed :)" + RESET << std::endl;

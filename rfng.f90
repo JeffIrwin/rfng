@@ -62,6 +62,8 @@ contains
 function seed_array(seed_, len_) bind(c, name = "seed_array_fort") result(rng)
 
 	! This is not public but C++ dgaf
+	!
+	! TODO: DRY with seed()
 
 	!integer(c_int32_t), intent(in) :: seed_
 	!integer(c_int32_t), intent(in) :: seed_(*)
@@ -176,6 +178,25 @@ function get_int32(rng) bind(c, name = "int32_fort") result(num)
 	num = y
 
 end function get_int32
+
+!===============================================================================
+
+function get_uint32(rng) bind(c, name = "uint32_fort") result(num)
+
+	type(rng_state_t)  :: rng
+	integer(c_int64_t) :: num
+
+	!********
+	!int64_t :: num
+
+	num = iand( &
+		!int(rng%s%int32(), int64), &
+		int(get_int32(rng), int64), &
+		int(z"ffffffff"   , int64))
+
+	!print *, "num = ", num
+
+end function get_uint32
 
 !===============================================================================
 
