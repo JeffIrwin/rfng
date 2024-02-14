@@ -65,8 +65,6 @@ function seed_array(seed_, len_) bind(c, name = "seed_array_fort") result(rng)
 	!
 	! TODO: DRY with seed()
 
-	!integer(c_int32_t), intent(in) :: seed_
-	!integer(c_int32_t), intent(in) :: seed_(*)
 	integer(c_int32_t), intent(in) :: seed_(len_)
 	integer(c_int32_t), intent(in) :: len_
 
@@ -101,8 +99,6 @@ end function seed_array
 !===============================================================================
 
 function seed(seed_) bind(c, name = "seed_fort") result(rng)
-
-	! This is not public but C++ dgaf
 
 	integer(c_int32_t), intent(in) :: seed_
 	type(rng_state_t) :: rng

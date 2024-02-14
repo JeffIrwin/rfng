@@ -1,5 +1,19 @@
+
 #ifndef INCLUDE_RFNG_H
 #define INCLUDE_RFNG_H
+
+// This header includes classes rfng::mt19937 and
+// rfng::uniform_int_distribution, which can act as drop-in substitutions for a
+// small subset of the standard classes std::mt19937 and
+// std::uniform_int_distribution.
+//
+// rfng::mt19937 is consistent with std::mt19937.  Given the same scalar seed,
+// they will generate the same uint32's.  uniform_int_distribution is not
+// consistent with std, but it should at least satisfy the conditions of being
+// (1) uniformly distributed, (2) random, and (3) within the given closed
+// interval.
+//
+// These C++ classes are just interfaces to implementations in Fortran.
 
 #include <iostream>
 #include <stdint.h>
@@ -70,10 +84,6 @@ class mt19937
 
 template<typename T = int32_t> class uniform_int_distribution
 {
-    // TODO: is it possible to construct without explicitly setting min and max?
-    // I think not since I've only defined one constructor.  Check how
-    // std::uniform_int_distribution behaves and add guards if necessary
-
     public:
         uniform_int_distribution(T min_, T max_)
         {
@@ -84,8 +94,6 @@ template<typename T = int32_t> class uniform_int_distribution
 
         T operator()(mt19937& gen)
         {
-            //return min + remainder(gen.int32(), max - min + 1);
-            //return min + remainder(gen(), max - min + 1);
             return min + remainder(gen.uint32(), max - min + 1);
         }
 
@@ -99,5 +107,6 @@ template<typename T = int32_t> class uniform_int_distribution
 
 };
 
-}  // namespace rfng
-#endif
+}
+#endif  // INCLUDE_RFNG_H
+

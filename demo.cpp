@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <random>
 #include <sstream>
+#include <string>
 
 #include "rfng.h"
 
@@ -39,8 +40,6 @@ std::string generateCode(const unsigned int len, std::string seed) {
 
 //********
 
-#include <string>
-
 int main()
 {
     std::cout << "hello c++ rng" << std::endl;
@@ -50,11 +49,11 @@ int main()
     //rfng::mt19937 rng;  // default seed
 
     std::cout << "rngs = " <<
-        rng.int32() << " " <<
-        rng.int32() << " " <<
-        rng.int32() << " " <<
-        rng.int32() << " " <<
-        rng.int32() << " " <<
+        rng() << " " <<
+        rng() << " " <<
+        rng() << " " <<
+        rng() << " " <<
+        rng() << " " <<
         std::endl;
 
     //********
@@ -62,6 +61,7 @@ int main()
     std::cout << "gen codes fort = " << "\n" <<
         generateCode(10, "ahhhhh") << "\n" <<
         generateCode(10, "ahhhhh") << "\n" <<
+        generateCode(10, "ahhhhi") << "\n" <<
         generateCode(10, "abcdef") << "\n" <<
         generateCode(10, "")       << "\n" <<
         generateCode(10, "")       << "\n" <<
@@ -70,6 +70,9 @@ int main()
     //********
 
     // Unit test
+	//
+	// This is a basic test of the C++ interface.  Slightly more extensive
+	// testing is covered within Fortran
 
     const std::string RED   = "\033[1;31m";
     const std::string GREEN = "\033[1;32m";
@@ -82,8 +85,6 @@ int main()
         r.int32() << " " <<
         std::endl;
 
-    //std::mt19937 gen_std;
-    //gen_std.seed(0);
     std::mt19937 gen_std(0);
     std::cout << "std  = " << gen_std() << std::endl;
     std::uniform_int_distribution<> dis_std(0, 255);

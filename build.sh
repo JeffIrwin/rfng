@@ -14,6 +14,8 @@ gfortran -c rfng.f90 $FFLAGS
 ar -crs librfng.a rfng.o
 
 # Build C++ demo
-g++ -o demo demo.cpp -std=c++20 -W librfng.a -lgfortran
+g++ -o demo demo.cpp -W librfng.a -lgfortran
+#g++ -o demo demo.cpp -std=c++20 -W librfng.a -lgfortran
+## `-std=c++20` requires g++ version ~12-ish
 ./demo
 
